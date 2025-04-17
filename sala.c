@@ -115,7 +115,31 @@ int guarda_estado_sala(const char* ruta_fichero){
 		perror("Error al escribir el estado de la sala");
 	}
 	close(fd);
-	return 0;
+	return 0;	// Si todo se ha ejecutado correctamente devolvemos un 0
+}
+
+int recupera_estado_sala(const char* ruta_fichero){
+	if(sala_teatro == NULL){ // Se verifica que la sala esta creada
+		return -1;
+	}
+	int fd = open(ruta_fichero, O_RDONLY); // Abrimos el fichero correspondiente y comprobamos que se
+	if(fd==-1){							   // pueda abrir con exito
+		perror("Error al abrir el fichero");
+		return -1;
+	}
+	struct stat details; // Creamos una variable "stat" para analizar los datos del fichero abierto
+	if(fstat(fd,details)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
+		perror("Error con la informacion del fichero o la capacidad no coincide") 	// que la capacidad coincida
+		close(fd); // Al estar comprobando el tamaño del fichero (abierto). Debemos cerrarlo
+		return -1;
+	}
+	int lectura = read(fd,sala_teatro,details.st_size); // Leemos el fichero y transcribimos los datos a "sala_teatro"
+	if(lectura==-1){
+		perror("Error al leer el fichero");
+		close(fd); // Debemos cerrar el fichero, pues aun esta abierto
+		return -1;
+	}
+	return 0; // Si todo se ha ejecutado correctamente devolvemos un 0
 }
 
 // Minishell. 1º argumento: nombre de sala. 2º argumento: capacidad de sala.

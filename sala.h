@@ -30,3 +30,11 @@ int crea_sala(int capacidad);
 // Libera el espacio reservado para la sala y devuelve 0 si todo va bien.
 // Da -1 si no hay sala.
 int elimina_sala();
+
+// Guarda el estado actual de la sala en el fichero que se pasa como argumento
+int guarda_estado_sala(const char* ruta_fichero);
+
+// Recupera el estado de la sala a partir de la información guardada en el fichero que se pasa
+// como argumento
+int recupera_estado_sala(const char* ruta_fichero);
+
