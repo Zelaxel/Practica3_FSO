@@ -38,3 +38,10 @@ int guarda_estado_sala(const char* ruta_fichero);
 // como argumento
 int recupera_estado_sala(const char* ruta_fichero);
 
+//Guarda el estado de un conjunto de asientos de la sala en un fichero preexistente que se pasa 
+// como argumento
+int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, int* id_asientos);
+
+// Recupera el estado de un conjunto de asientos de la sala a partir de la información guardada 
+// en un fichero preexistente que se pasa como argumento
+int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, int* id_asientos);

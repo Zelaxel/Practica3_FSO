@@ -131,7 +131,7 @@ int recupera_estado_sala(const char* ruta_fichero){
 		return -1;
 	}
 	struct stat info; // Creamos una variable "stat" para analizar los datos del fichero abierto
-	if(fstat(fd,info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
+	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
 		perror("Error con la informacion del fichero o la capacidad no coincide"); 	// que la capacidad coincida
 		close(fd);
 		return -1;
@@ -152,13 +152,13 @@ int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, in
 	if(sala_teatro == NULL){ // Verificamos si la sala ha sido creada, en caso contrario retornamos -1
 		return -1;
 	}
-	inf fd = open(ruta_fichero, O_RDWR); // Abrimos el fichero en formato LECTURA/ESCRITURA
+	int fd = open(ruta_fichero, O_RDWR); // Abrimos el fichero en formato LECTURA/ESCRITURA
 	if(fd==-1){
 		perror("Error al abrir el fichero");
 		return -1;
 	}
 	struct stat info; // Creamos la variable y con la funcion "fstat()" la llenamos con la info del fichero
-	if(fstat(fd,info)==-1 || info.st_size != capacidad_total*sizeof(int)){
+	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){
 		perror("Error con la informacion del fichero o la capacidad no coincide");
 		close(fd);
 		return -1;
@@ -174,10 +174,51 @@ int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, in
 			perror("Error al pasar la informacion del fichero");
 			close(fd);
 			return -1;
+		}	
+		// Guardamos la posicion del asiento que vamos a guardar y lo escribimos
+		ssize_t escritura = write(fd,&sala_teatro[id],sizeof(int));
+		if(escritura != sizeof(int)){
+			perror("Error al escribir el estado de la sala");
+			close(fd);
+			return -1;
 		}
-		int valor = sala_teatro[id];	// Guardamos la posicion del asiento que vamos a guardar y lo escribimos
-		ssize_t escritura = write(fd,&valor,sizeof(int));
-		if(escritura != sizeof(int){
+	}
+	// Una vez abierto el fichero siempre hay que cerrarlo. Incluso en las verificaciones anteriores, si llegase
+	// a ocurrir algun error y el fichero estuviera abierto.
+	close(fd);
+	return 0;
+}
+
+int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, int* id_asientos){
+	if(sala_teatro == NULL){ // Se verifica que la sala esta creada
+		return -1;
+	}
+	int fd = open(ruta_fichero, O_RDONLY); // Abrimos el fichero correspondiente y comprobamos que se
+	if(fd==-1){							   // pueda abrir con exito
+		perror("Error al abrir el fichero");
+		return -1;
+	}
+	struct stat info; // Creamos una variable "stat" para analizar los datos del fichero abierto
+	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
+		perror("Error con la informacion del fichero o la capacidad no coincide"); 	// que la capacidad coincida
+		close(fd);
+		return -1;
+	}
+	for(size_t i=0; i<num_asientos; i++){	// Creamos un bucle para rellenar el fichero con el conjunto de 
+		int id = id_asientos[i];			// asientos que se nos indican
+		if(id<0 || id>=capacidad_total){
+			perror("ID de asientos fuera de rango");
+			close(fd);
+			return -1;
+		}
+		if(lseek(fd, id*sizeof(int), SEEK_SET)==-1){	// Ajustamos el puntero del fichero con respecto al inicio
+			perror("Error al pasar la informacion del fichero");
+			close(fd);
+			return -1;
+		}
+		// Al leer los registros, se transquivira los datos a "sala_teatro".
+		ssize_t lectura = read(fd,&sala_teatro[id],sizeof(int));
+		if(lectura != sizeof(int){ 
 			perror("Error al escribir el estado de la sala");
 			close(fd);
 			return -1;
