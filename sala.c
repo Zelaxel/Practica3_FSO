@@ -104,20 +104,22 @@ int elimina_sala(){
 }
 
 int guarda_estado_sala(const char* ruta_fichero){
+	if(sala_teatro == NULL) {
+		return -1;
+	}
+	
 	int fd = creat(ruta_fichero, 0644); // El usuario tiene acceso a leer y escribir. El resto solo tienen 
 	if(fd==-1){							// acceso a la lectura
 		perror("Error al crear el fichero");
 		return -1;
 	}
 	
-	ssize_t escritura = write(fd,sala_teatro,capacidad_total*sizeof(int)); // Se escriben los estados de los asientos
-	if(escritura==-1 || escritura != capacidad_total * sizeof(int)){												 	   // de la sala
+	ssize_t escritura = write(fd, sala_teatro, capacidad_total*sizeof(int)); // Se escriben los estados de los asientos de la sala.
+	if(escritura==-1 || escritura != capacidad_total * sizeof(int)){
 		perror("Error al escribir el estado de la sala");
-		close(fd);
 		return -1;
 	}
-	close(fd);
-	// Una vez abierto el fichero siempre hay que cerrarlo.
+	close(fd);	// Una vez abierto el fichero siempre hay que cerrarlo.
 	return 0;	// Si todo se ha ejecutado correctamente devolvemos un 0
 }
 
@@ -133,13 +135,11 @@ int recupera_estado_sala(const char* ruta_fichero){
 	struct stat info; // Creamos una variable "stat" para analizar los datos del fichero abierto
 	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
 		perror("Error con la informacion del fichero o la capacidad no coincide"); 	// que la capacidad coincida
-		close(fd);
 		return -1;
 	}
 	int lectura = read(fd,sala_teatro,info.st_size); // Leemos el fichero y transcribimos los datos a "sala_teatro"
 	if(lectura==-1){
 		perror("Error al leer el fichero");
-		close(fd);
 		return -1;
 	}
 	close(fd);
@@ -218,11 +218,11 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 		}
 		// Al leer los registros, se transquivira los datos a "sala_teatro".
 		ssize_t lectura = read(fd,&sala_teatro[id],sizeof(int));
-		if(lectura != sizeof(int){ 
+		if(lectura != sizeof(int)){ 
 			perror("Error al escribir el estado de la sala");
 			close(fd);
 			return -1;
-		})
+		}
 	}
 	// Una vez abierto el fichero siempre hay que cerrarlo. Incluso en las verificaciones anteriores, si llegase
 	// a ocurrir algun error y el fichero estuviera abierto.
@@ -236,7 +236,7 @@ int main(int argc, char * argv[]){
 	crea_sala(atoi(argv[2])); // Crea la sala.
 	
 	char *nombre_sala = argv[1];
-	char menu[215] = "INSTRUCCIONES SALA DE %s:\n1. reserva_asiento\n2. libera_asiento\n3. estado_asiento\n4. estado_sala\n5. cerrar_sala\n6. limpiar_panel\n\n";
+	char menu[215] = "INSTRUCCIONES SALA DE %s:\n1. reserva_asiento\n2. libera_asiento\n3. estado_asiento\n4. estado_sala\n5. cerrar_sala\n6. limpiar_panel\n7. guardar_sala\n8. recuperar_sala\n\n";
 	
 	// Menú.
 	printf(menu,nombre_sala);
@@ -345,6 +345,15 @@ int main(int argc, char * argv[]){
 			}
 		}
 		
+		else if(!strcmp(instruccion,"guardar_sala")){ // 7. Guarda sala.
+			guarda_estado_sala(nombre_sala);
+			printf("Sala guardada.\n\n");
+		}
+		
+		else if(!strcmp(instruccion,"recuperar_sala")){ // 7. Guarda sala.
+			recupera_estado_sala(nombre_sala);
+			printf("Sala recuperada.\n\n");
+		}
 		else printf("Instruccion invalida '%s'. Intente de nuevo.\n\n",instruccion); // Opcion invalida.
 	}
 }
