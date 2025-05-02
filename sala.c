@@ -142,12 +142,17 @@ int recupera_estado_sala(const char* ruta_fichero){
 	// Accedemos al fichero.
 	int fd = open(ruta_fichero, O_RDONLY);
 	if(fd == -1){ // Error acceder fichero.
+<<<<<<< HEAD
 		perror("Error al acceder al fichero.");
+=======
+		perror("Error al acceder a fichero.");
+>>>>>>> 7258ab7fbce14db00ef2aa15a36005f5c4854c97
 		return -1;
 	}
 	// Leemos la capacidad.
 	leido = read(fd, &capacidad_fichero, sizeof(int));
 	if(leido == -1 || leido != sizeof(int)){ // Error lectura.
+<<<<<<< HEAD
 		perror("Error al leer la capacidad del fichero.");
 		close(fd);
 		return -1;
@@ -165,6 +170,24 @@ int recupera_estado_sala(const char* ruta_fichero){
 		close(fd);
 		return -1;
 	}
+=======
+		perror("Error al leer fichero.");
+		close(fd);
+		return -1;
+	} else if(capacidad_fichero != capacidad_total){ // Error capacidad erronea.
+		fprintf(stderr, "Error. la capacidad de la sala '%d' y la del fichero '%d' no coinciden.",
+				capacidad_total, capacidad_fichero);
+		close(fd);
+		return -1;
+	}
+	// Leemos los asientos.
+	leido = read(fd, sala_teatro, capacidad_total*sizeof(int));
+	if(leido == -1 || leido != capacidad_total*sizeof(int)){ // Error lectura.
+		perror("Error al leer fichero.");
+		close(fd);
+		return -1;
+	}
+>>>>>>> 7258ab7fbce14db00ef2aa15a36005f5c4854c97
 	
 	close(fd); // Todo salio bien;
 	return 0;
@@ -261,7 +284,11 @@ int main(){
 	reserva_asiento(51);
 	reserva_asiento(54);
 	
+<<<<<<< HEAD
 	printf("Ocupados = %d\n",asientos_libres());
+=======
+	printf("Capacidad = %d\n",asientos_libres());
+>>>>>>> 7258ab7fbce14db00ef2aa15a36005f5c4854c97
 	printf("Asiento 0 = %d\n",estado_asiento(0));
 	printf("Asiento 1 = %d\n",estado_asiento(1));
 	printf("Asiento 2 = %d\n",estado_asiento(2));
@@ -270,17 +297,29 @@ int main(){
 	guarda_estado_sala(fichero);
 	
 	elimina_sala();
+<<<<<<< HEAD
 	crea_sala(501);
 	
 	printf("Ocupados = %d\n",asientos_libres());
+=======
+	crea_sala(capacidad);
+	
+	printf("Capacidad = %d\n",asientos_libres());
+>>>>>>> 7258ab7fbce14db00ef2aa15a36005f5c4854c97
 	printf("Asiento 0 = %d\n",estado_asiento(0));
 	printf("Asiento 1 = %d\n",estado_asiento(1));
 	printf("Asiento 2 = %d\n",estado_asiento(2));
 	printf("Asiento 3 = %d\n",estado_asiento(3));
 	
+<<<<<<< HEAD
 	recupera_estado_sala(fichero);
 	
 	printf("Ocupados = %d\n",asientos_libres());
+=======
+	recupera_estado_sala("a");
+	
+	printf("Capacidad = %d\n",asientos_libres());
+>>>>>>> 7258ab7fbce14db00ef2aa15a36005f5c4854c97
 	printf("Asiento 0 = %d\n",estado_asiento(0));
 	printf("Asiento 1 = %d\n",estado_asiento(1));
 	printf("Asiento 2 = %d\n",estado_asiento(2));
