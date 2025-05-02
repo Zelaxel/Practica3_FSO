@@ -103,49 +103,71 @@ int elimina_sala(){
     return 0;
 }
 
+// Guarda el estado de la sala en un archivo.
 int guarda_estado_sala(const char* ruta_fichero){
-	if(sala_teatro == NULL) {
-		return -1;
-	}
+	if(sala_teatro == NULL) return -1; // Error. No hay sala.
+	ssize_t escrito;
 	
-	int fd = creat(ruta_fichero, 0644); // El usuario tiene acceso a leer y escribir. El resto solo tienen 
-	if(fd==-1){							// acceso a la lectura
-		perror("Error al crear el fichero");
-		return -1;
-	}
+	// Accedemos al fichero.
+	int fd = open(ruta_fichero, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+    if (fd == -1) { // Error acceder al fichero.
+        perror("Error al abrir el fichero.");
+        return -1;
+    }
+    // Guardamos la capacidad.
+    escrito = write(fd, &capacidad_total, sizeof(int));
+    if(escrito == -1 || escrito != sizeof(int)){ // Error al escribir la. capacidad.
+    	perror("Error al escribir la capacidad de la sala en el fichero.");
+        close(fd);
+        return -1;
+    }
+    // Guardamos los asientos.
+    escrito = write(fd, sala_teatro, capacidad_total*sizeof(int));
+    if(escrito == -1 || escrito != capacidad_total*sizeof(int)){
+    	perror("Error al escribir los asientos en el fichero.");
+        close(fd);
+        return -1;
+    }
 	
-	ssize_t escritura = write(fd, sala_teatro, capacidad_total*sizeof(int)); // Se escriben los estados de los asientos de la sala.
-	if(escritura==-1 || escritura != capacidad_total * sizeof(int)){
-		perror("Error al escribir el estado de la sala");
-		return -1;
-	}
 	close(fd);	// Una vez abierto el fichero siempre hay que cerrarlo.
 	return 0;	// Si todo se ha ejecutado correctamente devolvemos un 0
 }
 
 int recupera_estado_sala(const char* ruta_fichero){
-	if(sala_teatro == NULL){ // Se verifica que la sala esta creada
+	if(sala_teatro == NULL) return -1; // Error. No hay sala.
+	
+	int capacidad_fichero;
+	ssize_t leido;
+	
+	// Accedemos al fichero.
+	int fd = open(ruta_fichero, O_RDONLY);
+	if(fd == -1){ // Error acceder fichero.
+		perror("Error al acceder al fichero.");
 		return -1;
 	}
-	int fd = open(ruta_fichero, O_RDONLY); // Abrimos el fichero correspondiente y comprobamos que se
-	if(fd==-1){							   // pueda abrir con exito
-		perror("Error al abrir el fichero");
+	// Leemos la capacidad.
+	leido = read(fd, &capacidad_fichero, sizeof(int));
+	if(leido == -1 || leido != sizeof(int)){ // Error lectura.
+		perror("Error al leer la capacidad del fichero.");
+		close(fd);
 		return -1;
 	}
-	struct stat info; // Creamos una variable "stat" para analizar los datos del fichero abierto
-	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
-		perror("Error con la informacion del fichero o la capacidad no coincide"); 	// que la capacidad coincida
+	if(capacidad_fichero != capacidad_total){ // Error capacidad erronea.
+		fprintf(stderr, "Error. la capacidad de la sala '%d' y la del fichero '%d' no coinciden.\n",
+				capacidad_total, capacidad_fichero);
+		close(fd);
 		return -1;
 	}
-	int lectura = read(fd,sala_teatro,info.st_size); // Leemos el fichero y transcribimos los datos a "sala_teatro"
-	if(lectura==-1){
-		perror("Error al leer el fichero");
+	// Leemos los asientos.
+	leido = read(fd, sala_teatro, capacidad_total*sizeof(int));
+	if(leido == -1 || leido != capacidad_total*sizeof(int)){ // Error lectura.
+		perror("Error al leer asientos del fichero.");
+		close(fd);
 		return -1;
 	}
-	close(fd);
-	// Una vez abierto el fichero siempre hay que cerrarlo. Incluso en las verificaciones anteriores, si llegase
-	// a ocurrir algun error y el fichero estuviera abierto.
-	return 0; // Si todo se ha ejecutado correctamente devolvemos un 0
+	
+	close(fd); // Todo salio bien;
+	return 0;
 }
 
 int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, int* id_asientos){
@@ -230,130 +252,37 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 	return 0;
 }
 
-// Minishell. 1º argumento: nombre de sala. 2º argumento: capacidad de sala.
-int main(int argc, char * argv[]){
+int main(){
+	char* fichero = "sala_texto";
+	int capacidad = 500;
 	
-	crea_sala(atoi(argv[2])); // Crea la sala.
+	crea_sala(capacidad);
+	reserva_asiento(50);
+	reserva_asiento(51);
+	reserva_asiento(54);
 	
-	char *nombre_sala = argv[1];
-	char menu[215] = "INSTRUCCIONES SALA DE %s:\n1. reserva_asiento\n2. libera_asiento\n3. estado_asiento\n4. estado_sala\n5. cerrar_sala\n6. limpiar_panel\n7. guardar_sala\n8. recuperar_sala\n\n";
+	printf("Ocupados = %d\n",asientos_libres());
+	printf("Asiento 0 = %d\n",estado_asiento(0));
+	printf("Asiento 1 = %d\n",estado_asiento(1));
+	printf("Asiento 2 = %d\n",estado_asiento(2));
+	printf("Asiento 3 = %d\n",estado_asiento(3));
 	
-	// Menú.
-	printf(menu,nombre_sala);
-	while(1){
-		char instruccion[100];
-		scanf("%s",&instruccion); // Nueva instruccion.
-		
-		if(!strcmp(instruccion,"reserva_asiento")){ // 1. Reserva asiento.
-			char id[100];
-			printf("Dame el ID de la persona: ");
-			scanf("%s",&id);
-			int id_persona = atoi(id);
-			int id_asiento = reserva_asiento(id_persona);
-			switch(id_asiento){
-				case -1: // Persona erronea.
-					if(id_persona < 1){
-						printf("Error. El ID nº %d de la persona es invalido. Los ID's de personas deben ser mayor de 0.\n\n",
-						id_persona);
-					} else {
-						printf("Todos los asientos están ocupados.\n\n");
-					}
-					break;
-				default: // Asiento encontrado.
-					printf("El asiento nº %d ahora está asociado a la persona con ID nº %d.\n\n",
-							id_asiento,
-							id_persona);
-					break;
-			}
-		}
-		
-		else if(!strcmp(instruccion,"libera_asiento")){ // 2. Liberar asiento.
-			char id[100];
-			printf("Dame el ID del asiento: ");
-			scanf("%s",&id);
-			int id_asiento = atoi(id);
-			int id_persona = libera_asiento(id_asiento);
-			switch(id_persona){
-				case -1: // Asiento erroneo.
-					if(id_asiento < 0 || capacidad_sala() <= id_asiento){
-						printf("Error. El asiento nº %d no existe. Solo hay asientos del 0 al %d.\n\n",
-								id_asiento,
-								capacidad_sala()-1);
-					} else {
-						printf("El asiento nº %d ya estaba libre.\n\n",
-								id_asiento);
-					}
-					break;
-				default: // Asiento ocupado.
-					printf("El asiento nº %d estaba ocupado por la persona con ID nº %d. Ahora está libre.\n\n",
-							id_asiento,
-							id_persona);
-					break;
-			}
-		}
-		
-		else if(!strcmp(instruccion,"estado_asiento")){ // 3. Estado asiento.
-			char id[100];
-			printf("Dame el ID del asiento: ");
-			scanf("%s",&id);
-			int id_asiento = atoi(id);
-			int id_persona = estado_asiento(id_asiento);
-			switch(id_persona){
-				case -1: // Asiento erroneo.
-					printf("Error. El asiento nº %d no existe. Solo hay asientos del 0 al %d\n\n",
-							id_asiento,
-							capacidad_sala()-1);
-					break;
-				case 0: // Asiento libre.
-					printf("El asiento nº %d está libre.\n\n",
-							id_asiento);
-					break;
-				default: // Asiento ocupado.
-					printf("El asiento nº %d está ocupado por la persona %d\n\n",
-							id_asiento,
-							id_persona);
-					break;
-			}
-		}
-		
-		else if(!strcmp(instruccion,"estado_sala")){ // 4. Estado sala.
-			printf("Sala de %s:\nAsientos totales: %d\nAsientos ocupados: %d\nAsientos libres: %d\n\n",
-					nombre_sala,
-					capacidad_sala(),
-					asientos_ocupados(),
-					asientos_libres());
-		}
-		
-		else if(!strcmp(instruccion,"cerrar_sala")){ // 5. Cierra la sala.
-			elimina_sala();
-			break;
-		}
-		
-		else if(!strcmp(instruccion,"limpiar_panel")){ // 6. Limpia el terminal.
-			int estado;
-			switch(fork()){
-				case -1: // Error al lanzar proceso.
-					printf("No se pudo limpiar la pantalla. Repitalo ahora o más tarde.\n\n");
-					break;
-				case 0:	// (hijo) Borra la pantalla.
-					execlp("clear","clear",NULL);
-					break;
-				default: // (Padre) Espera a que el hijo borre.
-					wait(&estado);
-					printf(menu,nombre_sala);
-					break;
-			}
-		}
-		
-		else if(!strcmp(instruccion,"guardar_sala")){ // 7. Guarda sala.
-			guarda_estado_sala(nombre_sala);
-			printf("Sala guardada.\n\n");
-		}
-		
-		else if(!strcmp(instruccion,"recuperar_sala")){ // 7. Guarda sala.
-			recupera_estado_sala(nombre_sala);
-			printf("Sala recuperada.\n\n");
-		}
-		else printf("Instruccion invalida '%s'. Intente de nuevo.\n\n",instruccion); // Opcion invalida.
-	}
+	guarda_estado_sala(fichero);
+	
+	elimina_sala();
+	crea_sala(501);
+	
+	printf("Ocupados = %d\n",asientos_libres());
+	printf("Asiento 0 = %d\n",estado_asiento(0));
+	printf("Asiento 1 = %d\n",estado_asiento(1));
+	printf("Asiento 2 = %d\n",estado_asiento(2));
+	printf("Asiento 3 = %d\n",estado_asiento(3));
+	
+	recupera_estado_sala(fichero);
+	
+	printf("Ocupados = %d\n",asientos_libres());
+	printf("Asiento 0 = %d\n",estado_asiento(0));
+	printf("Asiento 1 = %d\n",estado_asiento(1));
+	printf("Asiento 2 = %d\n",estado_asiento(2));
+	printf("Asiento 3 = %d\n",estado_asiento(3));
 }
