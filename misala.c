@@ -110,16 +110,7 @@ int main(int argn, char* argv[]){
 			fprintf(stderr, "Error al recuperar sala.\n");
 			exit(-1);
 		}
-		for(int i=0; i<capacidad_total; i++){
-			if(sala_teatro[i]==0){
-				printf("Asiento %d: %s\n", i, sala_teatro[i], "Ocupado")
-			}
-			else{
-				if(sala_teatro[i]==-1){
-					printf("Asiento %d: %s\n", i, sala_teatro[i], "Libre")
-				}
-			}
-		}
+		comprobar_asientos();
 	}
 	return 0;
 }

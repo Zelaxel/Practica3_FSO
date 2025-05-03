@@ -252,3 +252,17 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 	return 0;
 }
 
+void comprobar_asientos(){
+	if (sala_teatro == NULL) {
+		fprintf(stderr, "La sala no está creada.\n");
+		return;
+	}
+
+	for (int i = 0; i < capacidad_total; i++) {
+		if (sala_teatro[i] == -1) {
+			printf("Asiento %d: Libre\n", i);
+		} else {
+			printf("Asiento %d: Ocupado por %d\n", i, sala_teatro[i]);
+		}
+	}
+}
