@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 // Escribe el id en un 'asiento' en memoria y devuelve su dirección.
 // Da -1 si no hay sala o no hay asientos.
 int reserva_asiento(int id_persona);
