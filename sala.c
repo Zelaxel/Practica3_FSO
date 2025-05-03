@@ -252,6 +252,3 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 	return 0;
 }
 
-int main(){
-	
-}
