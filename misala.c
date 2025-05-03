@@ -57,6 +57,70 @@ int main(int argn, char* argv[]){
 		}
 	}
 	
+	// Anulacion
+	if(!strcmp(argv[1], "anula")){
+		if(argn < 6 || strcmp(argv[2], "-f") != 0 || strcmp(argv[4], "-asientos") != 0){
+			fprintf(stderr, "Instruccion desconocida. Para más información usa './misala help'\n");
+			exit(-1);
+		}
+
+		const char* ruta = argv[3];
+		size_t num_asientos = argn - 5;
+	
+		if (recupera_estado_sala(argv[3]) == -1) {
+			fprintf(stderr, "Error al recuperar sala desde el fichero '%s'\n", ruta);
+			exit(-1);
+		}
+	
+		int* id_asientos_validos = malloc((argn - 5) * sizeof(int));
+		if (!id_asientos_validos) {
+			fprintf(stderr, "Error de memoria\n");
+			exit(-1);
+		}
+	
+		size_t validos = 0;
+		for (int i = 5; i < argn; i++) {
+			int id = atoi(argv[i]);
+			if (id < 0 || id >= capacidad_total) {
+				fprintf(stderr, "ID de asiento inválido: %d\n", id);
+				continue;
+			}
+			anula_asiento(id);
+			id_asientos_validos[validos++] = id;
+		}
+	
+		if (validos > 0) {
+			if (guarda_estado_parcial_sala(ruta, validos, id_asientos_validos) == -1) {
+				fprintf(stderr, "Error al guardar el estado parcial de la sala\n");
+				free(id_asientos_validos);
+				exit(-1);
+			}
+		}
+	
+		free(id_asientos_validos);
+	}
+
+	// Estado
+	if(!strcmp(argv[1], "estado")){
+		if(argn != 4 || srtcmp(argv[2], "-f") != 0){
+			fprintf(stderr, "Instruccion desconocida. Para más información usa './misala help'\n");
+			exit(-1);
+		}
+		if(recupera_estado_sala(argv[3]) == -1) {
+			fprintf(stderr, "Error al recuperar sala.\n");
+			exit(-1);
+		}
+		for(int i=0; i<capacidad_total; i++){
+			if(sala_teatro[i]==0){
+				printf("Asiento %d: %s\n", i, sala_teatro[i], "Ocupado")
+			}
+			else{
+				if(sala_teatro[i]==-1){
+					printf("Asiento %d: %s\n", i, sala_teatro[i], "Libre")
+				}
+			}
+		}
+	}
 	return 0;
 }
 
