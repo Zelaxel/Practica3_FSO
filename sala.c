@@ -111,20 +111,20 @@ int guarda_estado_sala(const char* ruta_fichero){
 	// Accedemos al fichero.
 	int fd = open(ruta_fichero, O_WRONLY|O_CREAT|O_TRUNC, 0644);
     if (fd == -1) { // Error acceder al fichero.
-        perror("Error al abrir el fichero.");
+        perror("Error al abrir el fichero");
         return -1;
     }
     // Guardamos la capacidad.
     escrito = write(fd, &capacidad_total, sizeof(int));
     if(escrito == -1 || escrito != sizeof(int)){ // Error al escribir la. capacidad.
-    	perror("Error al escribir la capacidad de la sala en el fichero.");
+    	perror("Error al escribir la capacidad de la sala en el fichero");
         close(fd);
         return -1;
     }
     // Guardamos los asientos.
     escrito = write(fd, sala_teatro, capacidad_total*sizeof(int));
     if(escrito == -1 || escrito != capacidad_total*sizeof(int)){
-    	perror("Error al escribir los asientos en el fichero.");
+    	perror("Error al escribir los asientos en el fichero");
         close(fd);
         return -1;
     }
@@ -142,13 +142,13 @@ int recupera_estado_sala(const char* ruta_fichero){
 	// Accedemos al fichero.
 	int fd = open(ruta_fichero, O_RDONLY);
 	if(fd == -1){ // Error acceder fichero.
-		perror("Error al acceder a fichero.");
+		perror("Error al acceder a fichero");
 		return -1;
 	}
 	// Leemos la capacidad.
 	leido = read(fd, &capacidad_fichero, sizeof(int));
 	if(leido == -1 || leido != sizeof(int)){ // Error lectura.
-		perror("Error al leer la capacidad del fichero.");
+		perror("Error al leer la capacidad del fichero");
 		close(fd);
 		return -1;
 	}
@@ -174,13 +174,17 @@ int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, in
 	if(sala_teatro == NULL){ // Verificamos si la sala ha sido creada, en caso contrario retornamos -1
 		return -1;
 	}
+	if (id_asientos == NULL) { // Error. Vector nulo.
+		fprintf(stderr, "No hay vector.\n");
+		return -1;
+	}
 	int fd = open(ruta_fichero, O_RDWR); // Abrimos el fichero en formato LECTURA/ESCRITURA
 	if(fd==-1){
 		perror("Error al abrir el fichero");
 		return -1;
 	}
 	struct stat info; // Creamos la variable y con la funcion "fstat()" la llenamos con la info del fichero
-	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){
+	if(fstat(fd,&info)==-1 || info.st_size != sizeof(int) + capacidad_total*sizeof(int)){
 		perror("Error con la informacion del fichero o la capacidad no coincide");
 		close(fd);
 		return -1;
@@ -192,7 +196,7 @@ int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, in
 			close(fd);
 			return -1;
 		}
-		if(lseek(fd, id*sizeof(int), SEEK_SET)==-1){	// Ajustamos el puntero del fichero con respecto al inicio
+		if(lseek(fd, sizeof(int) + id * sizeof(int), SEEK_SET)==-1){	// Ajustamos el puntero del fichero con respecto al inicio
 			perror("Error al pasar la informacion del fichero");
 			close(fd);
 			return -1;
@@ -215,13 +219,17 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 	if(sala_teatro == NULL){ // Se verifica que la sala esta creada
 		return -1;
 	}
+	if (id_asientos == NULL) { // Error. Vector nulo.
+		fprintf(stderr, "No hay vector.\n");
+		return -1;
+	}
 	int fd = open(ruta_fichero, O_RDONLY); // Abrimos el fichero correspondiente y comprobamos que se
 	if(fd==-1){							   // pueda abrir con exito
 		perror("Error al abrir el fichero");
 		return -1;
 	}
 	struct stat info; // Creamos una variable "stat" para analizar los datos del fichero abierto
-	if(fstat(fd,&info)==-1 || info.st_size != capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
+	if(fstat(fd,&info)==-1 || info.st_size != sizeof(int) + capacidad_total*sizeof(int)){ 		// Comprobamos que se puedan ver los detalles y
 		perror("Error con la informacion del fichero o la capacidad no coincide"); 	// que la capacidad coincida
 		close(fd);
 		return -1;
@@ -233,7 +241,7 @@ int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, 
 			close(fd);
 			return -1;
 		}
-		if(lseek(fd, id*sizeof(int), SEEK_SET)==-1){	// Ajustamos el puntero del fichero con respecto al inicio
+		if(lseek(fd, sizeof(int) + id * sizeof(int), SEEK_SET)==-1){	// Ajustamos el puntero del fichero con respecto al inicio
 			perror("Error al pasar la informacion del fichero");
 			close(fd);
 			return -1;
@@ -257,12 +265,13 @@ void comprobar_asientos(){
 		fprintf(stderr, "La sala no está creada.\n");
 		return;
 	}
-
+	printf("Asientos totales: %d\nAsientos ocupados: %d\nAsientos libres: %d\n",
+		   capacidad_sala(), asientos_ocupados(), asientos_libres());
 	for (int i = 0; i < capacidad_total; i++) {
 		if (sala_teatro[i] == -1) {
-			printf("Asiento %d: Libre\n", i);
+			printf("Asiento %3dº: Libre\n", i);
 		} else {
-			printf("Asiento %d: Ocupado por %d\n", i, sala_teatro[i]);
+			printf("Asiento %3dº: Ocupado por %d\n", i, sala_teatro[i]);
 		}
 	}
 }

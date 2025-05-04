@@ -47,3 +47,6 @@ int guarda_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, in
 // Recupera el estado de un conjunto de asientos de la sala a partir de la información guardada 
 // en un fichero preexistente que se pasa como argumento
 int recupera_estado_parcial_sala(const char* ruta_fichero, size_t num_asientos, int* id_asientos);
+
+// Imprime por pantalla el estado de la sala.
+void comprobar_asientos();
